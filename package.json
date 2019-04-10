@@ -13,6 +13,8 @@
     "standard": "^12.0.1"
   },
   "standard": {
-    "env": "browser"
+    "env": {
+      "browser": true
+    }
   }
 }
