@@ -1,6 +1,6 @@
 {
   "name": "choreographer-router",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Client side router for Web Components using URI Templates",
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
   "license": "ISC",
