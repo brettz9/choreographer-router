@@ -37,7 +37,7 @@ URI Templates (RFC6570) implementation.
 
 Code: [source/router.js](./source/router.js)
 
-The History API and link click trapping. Emits a `route` event whenever a navigation occurs.
+The History API and link click trapping. The [`popstate` event](https://developer.mozilla.org/en-US/docs/Web/API/Document/defaultView/popstate_event) is fired whenever a navigation occurs.
 
 ### Class: Choreographer({ stage, scenes })
 
