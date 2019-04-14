@@ -1,4 +1,4 @@
-import UriTemplate from './uri-template'
+import UriTemplate from './uri-template.js'
 
 export default class Router {
   constructor (routes = new Map(), fallback = Function) {
