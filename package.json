@@ -5,6 +5,8 @@
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
   "license": "ISC",
   "main": "source/index.js",
+  "module": "source/index.js",
+  "repository": "gitlab:sebdeckers/choreographer-router",
   "scripts": {
     "test": "standard --verbose | snazzy"
   },
