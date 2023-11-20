@@ -39,7 +39,7 @@ Code: [source/router.js](./source/router.js)
 
 The History API and link click trapping. The [`popstate` event](https://developer.mozilla.org/en-US/docs/Web/API/Document/defaultView/popstate_event) is fired whenever a navigation occurs.
 
-### Class: Choreographer({ stage, scenes })
+### Class: Choreographer({ stage, scenes }, [fallback])
 
 Code: [source/choreographer.js](./source/choreographer.js)
 
@@ -47,6 +47,7 @@ Associates Web Component element names with specific routes. Creates and removes
 
 - `stage` is an container HTML element where the active *scene* element is appended.
 - `scenes` is an Array or other iterable object whose elements are key-value pairs. Each key is a URI Template of a route. Its value is the type of content to perform on the stage.
+- `fallback` is a function which will be called with the path if there are no scene matches.
 
 Scene content can be:
 

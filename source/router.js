@@ -1,7 +1,19 @@
 import UriTemplate from './uri-template.js'
 
+/**
+ * @typedef {import('./uri-template.js').Params} Params
+ */
+
+/**
+ * @typedef {(params: Params) => void} Handler
+ */
+
 export default class Router {
-  constructor (routes = new Map(), fallback = Function) {
+  /**
+   * @param {Map<string, Handler>} routes
+   * @param {(path: string) => void} fallback
+   */
+  constructor (routes = new Map(), fallback = () => {}) {
     this.routes = new Map()
     this.fallback = fallback
 
@@ -11,7 +23,7 @@ export default class Router {
 
     document.addEventListener('click', (event) => {
       const elementNode = Node.ELEMENT_NODE
-      for (const target of event.composedPath()) {
+      for (const target of /** @type {(HTMLAnchorElement)[]} */ (event.composedPath())) {
         if (target.nodeType === elementNode && target.localName === 'a') {
           if (target.origin === window.origin) {
             event.preventDefault()
@@ -34,6 +46,10 @@ export default class Router {
     }
   }
 
+  /**
+   * @param {string} pattern
+   * @param {Handler} handler
+   */
   route (pattern, handler) {
     const template = new UriTemplate(pattern)
     const predicate = template.fromUri
@@ -41,6 +57,9 @@ export default class Router {
     return this
   }
 
+  /**
+   * @param {string|Location} url
+   */
   trigger (url = '') {
     const path = typeof url === 'string'
       ? url
@@ -49,6 +68,7 @@ export default class Router {
     if (path === this.path) {
       return
     } else {
+      /** @type {string} */
       this.path = path
     }
 

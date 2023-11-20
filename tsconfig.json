@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": ["es2022", "DOM"],
+    "moduleResolution": "nodenext",
+    "module": "NodeNext",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "strict": true,
+    "target": "es2017",
+    "outDir": "dist"
+  },
+  "include": ["source/**/*.js"],
+  "exclude": ["node_modules"]
+}

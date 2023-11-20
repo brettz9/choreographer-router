@@ -1,5 +1,23 @@
 import Router from './router.js'
 
+/**
+ * @typedef {import('./router.js').Params} Params
+ */
+
+/**
+ * @typedef {(pattern: string, params: Params) => void} SceneCallback
+ */
+
+/**
+ * @this {Choreographer}
+ * @param {string} pattern
+ * @param {Params} params
+ * @param {{
+ *   tagName?: string
+ *   redirect?: URL
+ *   callback?: SceneCallback
+ * }} cfg
+ */
 function onRoute (pattern, params, { tagName, callback, redirect }) {
   if (callback) {
     if (this.scene !== undefined) {
@@ -33,6 +51,10 @@ function onRoute (pattern, params, { tagName, callback, redirect }) {
   }
 }
 
+/**
+ * @this {Choreographer}
+ * @param {string} url
+ */
 function onFallback (url) {
   if (this.scene) {
     this.stage.removeChild(this.scene)
@@ -41,6 +63,16 @@ function onFallback (url) {
 }
 
 export default class Choreographer extends Router {
+  /**
+   * @param {{
+   *   stage: Element,
+   *   scenes: [
+   *     pattern: string,
+   *     options: string|Location|SceneCallback|{tagName: string}|{redirect: URL}|
+   *       {callback: SceneCallback}
+   *   ][]
+   * }} cfg
+   */
   constructor ({ stage, scenes }) {
     const routes = new Map()
     for (let [pattern, options] of new Map(scenes).entries()) {
@@ -53,11 +85,31 @@ export default class Choreographer extends Router {
       if (typeof options === 'function') {
         options = { callback: options }
       }
-      const handler = (params) => onRoute.call(this, pattern, params, options)
+
+      /**
+       * @param {Params} params
+       */
+      const handler = (params) => onRoute.call(
+        this,
+        pattern,
+        params,
+        /**
+         * @type {{
+         *   tagName: string
+         * }|{
+         *   redirect: URL
+         * }|{
+         *   callback: SceneCallback
+         * }}
+         */
+        (options)
+      )
       routes.set(pattern, handler)
     }
     super(routes, (url) => onFallback.call(this, url))
     this.stage = stage
+
+    /** @type {HTMLElement|undefined} */
     this.scene = undefined
   }
 }

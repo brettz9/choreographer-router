@@ -5,16 +5,22 @@
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
   "license": "ISC",
   "main": "source/index.js",
+  "types": "./dist/index.d.ts",
   "module": "source/index.js",
   "repository": "gitlab:sebdeckers/choreographer-router",
   "scripts": {
+    "tsc": "tsc",
     "test": "standard --verbose | snazzy"
   },
   "devDependencies": {
     "snazzy": "^8.0.0",
-    "standard": "^12.0.1"
+    "standard": "^12.0.1",
+    "typescript": "^5.2.2"
   },
   "standard": {
+    "ignore": [
+      "dist"
+    ],
     "env": {
       "browser": true
     }

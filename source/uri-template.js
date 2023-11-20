@@ -1,6 +1,30 @@
 // Source: https://github.com/geraintluff/uri-templates
-// Adapted only to export using the ECMAScript module syntax.
+// Adapted only to export using the ECMAScript module syntax and for TS support.
 /* eslint-disable */
+
+/**
+ * @typedef {{[key: string]: string}} Params
+ */
+
+/**
+ * @typedef {{
+ *   truncate: number | null;
+ *   name: string;
+ *   suffices: {'*'?: true|undefined};
+ * }} VarSpec
+ */
+
+/**
+ * @typedef {((
+ *   valueFunction: (s: string) => null|undefined|string[]|{[key: string]: string}|string
+ * ) => string) & {
+ *   varNames: string[]
+ * }} SubFunction
+ */
+
+/**
+ * @typedef {(stringValue: string|string[], resultObj: any) => void|null} GuessFunction
+ */
 
 var uriTemplateGlobalModifiers = {
   "+": true,
@@ -15,15 +39,23 @@ var uriTemplateSuffices = {
   "*": true
 };
 
+/**
+ * @param {string} string
+ */
 function notReallyPercentEncode(string) {
   return encodeURI(string).replace(/%25[0-9][0-9]/g, function (doubleEncoded) {
     return "%" + doubleEncoded.substring(3);
   });
 }
 
+/**
+ * @param {string} spec
+ */
 function uriTemplateSubstitution(spec) {
   var modifier = "";
-  if (uriTemplateGlobalModifiers[spec.charAt(0)]) {
+  if (uriTemplateGlobalModifiers[
+    /** @type {keyof uriTemplateGlobalModifiers} */ (spec.charAt(0))
+  ]) {
     modifier = spec.charAt(0);
     spec = spec.substring(1);
   }
@@ -58,9 +90,14 @@ function uriTemplateSubstitution(spec) {
     showVariables = true;
   }
 
+  /** @type {string[]} */
   var varNames = [];
   var varList = spec.split(",");
+
+  /** @type {VarSpec[]} */
   var varSpecs = [];
+
+  /** @type {{[key: string]: VarSpec}} */
   var varSpecMap = {};
   for (var i = 0; i < varList.length; i++) {
     var varName = varList[i];
@@ -70,9 +107,16 @@ function uriTemplateSubstitution(spec) {
       varName = parts[0];
       truncate = parseInt(parts[1]);
     }
+
+    /** @type {{[key in keyof uriTemplateSuffices]?: true}} */
     var suffices = {};
-    while (uriTemplateSuffices[varName.charAt(varName.length - 1)]) {
-      suffices[varName.charAt(varName.length - 1)] = true;
+    while (uriTemplateSuffices[
+      /** @type {keyof uriTemplateSuffices} */
+      (varName.charAt(varName.length - 1))
+    ]) {
+      suffices[/** @type {keyof uriTemplateSuffices} */ (
+        varName.charAt(varName.length - 1)
+      )] = true;
       varName = varName.substring(0, varName.length - 1);
     }
     var varSpec = {
@@ -84,6 +128,8 @@ function uriTemplateSubstitution(spec) {
     varSpecMap[varName] = varSpec;
     varNames.push(varName);
   }
+
+  /** @type {SubFunction} */
   var subFunction = function (valueFunction) {
     var result = "";
     var startIndex = 0;
@@ -141,10 +187,14 @@ function uriTemplateSubstitution(spec) {
     }
     return result;
   };
+
+  /** @type {GuessFunction} */
   var guessFunction = function (stringValue, resultObj) {
     if (prefix) {
-      if (stringValue.substring(0, prefix.length) == prefix) {
-        stringValue = stringValue.substring(prefix.length);
+      if (/** @type {string} */ (
+        stringValue
+      ).substring(0, prefix.length) == prefix) {
+        stringValue = /** @type {string} */ (stringValue).substring(prefix.length);
       } else {
         return null;
       }
@@ -152,7 +202,11 @@ function uriTemplateSubstitution(spec) {
     if (varSpecs.length == 1 && varSpecs[0].suffices['*']) {
       var varSpec = varSpecs[0];
       var varName = varSpec.name;
-      var arrayValue = varSpec.suffices['*'] ? stringValue.split(separator || ",") : [stringValue];
+
+      /** @type {(string|string[])[]} */
+      var arrayValue = varSpec.suffices['*'] ? /** @type {string} */ (
+        stringValue
+      ).split(separator || ",") : [stringValue];
       var hasEquals = (shouldEscape && stringValue.indexOf('=') != -1);	// There's otherwise no way to distinguish between "{value*}" for arrays and objects
       for (var i = 1; i < arrayValue.length; i++) {
         var stringValue = arrayValue[i];
@@ -168,7 +222,7 @@ function uriTemplateSubstitution(spec) {
         if (shouldEscape && stringValue.indexOf('=') != -1) {
           hasEquals = true;
         }
-        var innerArrayValue = stringValue.split(",");
+        var innerArrayValue = /** @type {string} */ (stringValue).split(",");
         for (var j = 0; j < innerArrayValue.length; j++) {
           if (shouldEscape) {
             innerArrayValue[j] = decodeURIComponent(innerArrayValue[j]);
@@ -184,6 +238,7 @@ function uriTemplateSubstitution(spec) {
       if (showVariables || hasEquals) {
         var objectValue = resultObj[varName] || {};
         for (var j = 0; j < arrayValue.length; j++) {
+          /** @type {string|string[]} */
           var innerValue = stringValue;
           if (showVariables && !innerValue) {
             // The empty string isn't a valid variable, so if our value is zero-length we have nothing
@@ -191,14 +246,18 @@ function uriTemplateSubstitution(spec) {
           }
           if (typeof arrayValue[j] == "string") {
             var stringValue = arrayValue[j];
-            var innerVarName = stringValue.split("=", 1)[0];
-            var stringValue = stringValue.substring(innerVarName.length + 1);
+            var innerVarName = /** @type {string} */ (stringValue).split("=", 1)[0];
+            var stringValue = /** @type {string|string[]} */ (/** @type {string} */ (stringValue).substring(innerVarName.length + 1));
             innerValue = stringValue;
           } else {
-            var stringValue = arrayValue[j][0];
-            var innerVarName = stringValue.split("=", 1)[0];
-            var stringValue = stringValue.substring(innerVarName.length + 1);
-            arrayValue[j][0] = stringValue;
+            var stringValue = /** @type {string|string[]} */ (arrayValue[j][0]);
+            var innerVarName = /** @type {string} */ (stringValue).split("=", 1)[0];
+            var stringValue = /** @type {string|string[]} */ (
+              /** @type {string} */ (stringValue).substring(innerVarName.length + 1)
+            );
+            /** @type {string[]} */ (arrayValue[j])[0] = /** @type {string} */ (
+              stringValue
+            );
             innerValue = arrayValue[j];
           }
           if (objectValue[innerVarName] !== undefined) {
@@ -232,7 +291,11 @@ function uriTemplateSubstitution(spec) {
         }
       }
     } else {
-      var arrayValue = (varSpecs.length == 1) ? [stringValue] : stringValue.split(separator || ",");
+      /** @type {(string|string[])[]} */
+      var arrayValue = (varSpecs.length == 1) ? [stringValue] : /** @type {string} */ (
+        stringValue
+      ).split(separator || ",");
+      /** @type {{[key: number]: number}} */
       var specIndexMap = {};
       for (var i = 0; i < arrayValue.length; i++) {
         // Try from beginning
@@ -268,14 +331,14 @@ function uriTemplateSubstitution(spec) {
           // The empty string isn't a valid variable, so if our value is zero-length we have nothing
           continue;
         }
-        var innerArrayValue = stringValue.split(",");
+        var innerArrayValue = /** @type {string} */ (stringValue).split(",");
         var hasEquals = false;
 
         if (showVariables) {
-          var stringValue = innerArrayValue[0]; // using innerArrayValue
-          var varName = stringValue.split("=", 1)[0];
-          var stringValue = stringValue.substring(varName.length + 1);
-          innerArrayValue[0] = stringValue;
+          var stringValue = /** @type {string|string[]} */ (innerArrayValue[0]); // using innerArrayValue
+          var varName = /** @type {string} */ (stringValue).split("=", 1)[0];
+          var stringValue = /** @type {string|string[]} */ (/** @type {string} */ (stringValue).substring(varName.length + 1));
+          innerArrayValue[0] = /** @type {string} */ (stringValue);
           var varSpec = varSpecMap[varName] || varSpecs[0];
         } else {
           var varSpec = varSpecs[specIndexMap[i]];
@@ -312,18 +375,28 @@ function uriTemplateSubstitution(spec) {
   };
 }
 
+/**
+ * @param {string} template
+ */
 function UriTemplate(template) {
   if (!(this instanceof UriTemplate)) {
     return new UriTemplate(template);
   }
   var parts = template.split("{");
-  var textParts = [parts.shift()];
+  var textParts = [/** @type {string} */ (parts.shift())];
+  /** @type {string[]} */
   var prefixes = [];
+
+  /** @type {SubFunction[]} */
   var substitutions = [];
+
+  /** @type {GuessFunction[]} */
   var unSubstitutions = [];
+
+  /** @type {string[]} */
   var varNames = [];
   while (parts.length > 0) {
-    var part = parts.shift();
+    var part = /** @type {string} */ (parts.shift());
     var spec = part.split("}")[0];
     var remainder = part.substring(spec.length + 1);
     var funcs = uriTemplateSubstitution(spec);
@@ -333,6 +406,17 @@ function UriTemplate(template) {
     textParts.push(remainder);
     varNames = varNames.concat(funcs.substitution.varNames);
   }
+
+  /**
+   * @type {{
+   *   (
+   *     callback: (varName: string) => string | {[key: string]: string}
+   *   ): string;
+   *   (
+   *     vars: {[key: string]: string | {[key: string]: string}}
+   *   ): string
+   * }}
+   */
   this.fill = function (valueFunction) {
     if (valueFunction && typeof valueFunction !== 'function') {
       var value = valueFunction;
@@ -349,7 +433,13 @@ function UriTemplate(template) {
     }
     return result;
   };
+
+  /**
+   * @param {string} substituted
+   * @returns {Params | undefined}
+   */
   this.fromUri = function (substituted) {
+    /** @type {{[key: string]: string}} */
     var result = {};
     for (var i = 0; i < textParts.length; i++) {
       var part = textParts[i];
@@ -399,12 +489,21 @@ function UriTemplate(template) {
     return result;
   }
   this.varNames = varNames;
+
+  /** @type {string} */
   this.template = template;
 }
 UriTemplate.prototype = {
+  /**
+   * @returns {string}
+   */
   toString: function () {
     return this.template;
   },
+
+  /**
+   * @type {(vars: {[key: string]: string|{[key: string]: string}}) => string}
+   */
   fillFromObject: function (obj) {
     return this.fill(obj);
   }
