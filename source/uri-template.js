@@ -188,7 +188,8 @@ function uriTemplateSubstitution(spec) {
   };
 
   /** @type {GuessFunction} */
-  const guessFunction = function (stringValue, resultObj) {
+  const guessFunction = function (theStringValue, resultObj) {
+    let stringValue = theStringValue;
     if (prefix) {
       if (/** @type {string} */ (
         stringValue
@@ -208,7 +209,7 @@ function uriTemplateSubstitution(spec) {
       ).split(separator || ",") : [stringValue];
       let hasEquals = (shouldEscape && stringValue.indexOf('=') != -1);	// There's otherwise no way to distinguish between "{value*}" for arrays and objects
       for (let i = 1; i < arrayValue.length; i++) {
-        var stringValue = arrayValue[i];
+        stringValue = arrayValue[i];
         if (hasEquals && stringValue.indexOf('=') == -1) {
           // Bit of a hack - if we're expecting "=" for key/value pairs, and values can't contain "=", then assume a value has been accidentally split
           arrayValue[i - 1] += (separator || ",") + stringValue;
@@ -217,7 +218,7 @@ function uriTemplateSubstitution(spec) {
         }
       }
       for (let i = 0; i < arrayValue.length; i++) {
-        var stringValue = arrayValue[i];
+        stringValue = arrayValue[i];
         if (shouldEscape && stringValue.indexOf('=') != -1) {
           hasEquals = true;
         }
@@ -245,14 +246,14 @@ function uriTemplateSubstitution(spec) {
           }
           let innerVarName;
           if (typeof arrayValue[j] == "string") {
-            var stringValue = arrayValue[j];
+            stringValue = arrayValue[j];
             innerVarName = /** @type {string} */ (stringValue).split("=", 1)[0];
-            var stringValue = /** @type {string|string[]} */ (/** @type {string} */ (stringValue).slice(innerVarName.length + 1));
+            stringValue = /** @type {string|string[]} */ (/** @type {string} */ (stringValue).slice(innerVarName.length + 1));
             innerValue = stringValue;
           } else {
-            var stringValue = /** @type {string|string[]} */ (arrayValue[j][0]);
+            stringValue = /** @type {string|string[]} */ (arrayValue[j][0]);
             innerVarName = /** @type {string} */ (stringValue).split("=", 1)[0];
-            var stringValue = /** @type {string|string[]} */ (
+            stringValue = /** @type {string|string[]} */ (
               /** @type {string} */ (stringValue).slice(innerVarName.length + 1)
             );
             /** @type {string[]} */ (arrayValue[j])[0] = /** @type {string} */ (
@@ -327,7 +328,7 @@ function uriTemplateSubstitution(spec) {
         specIndexMap[i] = firstStarred;
       }
       for (let i = 0; i < arrayValue.length; i++) {
-        var stringValue = arrayValue[i];
+        stringValue = arrayValue[i];
         if (!stringValue && showVariables) {
           // The empty string isn't a valid variable, so if our value is zero-length we have nothing
           continue;
@@ -338,9 +339,9 @@ function uriTemplateSubstitution(spec) {
         let varName;
         let varSpec;
         if (showVariables) {
-          var stringValue = /** @type {string|string[]} */ (innerArrayValue[0]); // using innerArrayValue
+          stringValue = /** @type {string|string[]} */ (innerArrayValue[0]); // using innerArrayValue
           varName = /** @type {string} */ (stringValue).split("=", 1)[0];
-          var stringValue = /** @type {string|string[]} */ (/** @type {string} */ (stringValue).slice(varName.length + 1));
+          stringValue = /** @type {string|string[]} */ (/** @type {string} */ (stringValue).slice(varName.length + 1));
           innerArrayValue[0] = /** @type {string} */ (stringValue);
           varSpec = varSpecMap[varName] || varSpecs[0];
         } else {
@@ -459,22 +460,23 @@ function UriTemplate(template) {
       }
       let nextPart = textParts[i + 1];
       let offset = i;
+      let stringValue;
       while (true) {
         if (offset == textParts.length - 2) {
           const endPart = substituted.slice(substituted.length - nextPart.length);
           if (endPart !== nextPart) {
             return undefined;
           }
-          var stringValue = substituted.substring(0, substituted.length - nextPart.length);
+          stringValue = substituted.substring(0, substituted.length - nextPart.length);
           substituted = endPart;
         } else if (nextPart) {
           const nextPartPos = substituted.indexOf(nextPart);
-          var stringValue = substituted.substring(0, nextPartPos);
+          stringValue = substituted.substring(0, nextPartPos);
           substituted = substituted.slice(nextPartPos);
         } else if (prefixes[offset + 1]) {
           let nextPartPos = substituted.indexOf(prefixes[offset + 1]);
           if (nextPartPos === -1) nextPartPos = substituted.length;
-          var stringValue = substituted.substring(0, nextPartPos);
+          stringValue = substituted.substring(0, nextPartPos);
           substituted = substituted.slice(nextPartPos);
         } else if (textParts.length > offset + 2) {
           // If the separator between this variable and the next is blank (with no prefix), continue onwards
@@ -482,7 +484,7 @@ function UriTemplate(template) {
           nextPart = textParts[offset + 1];
           continue;
         } else {
-          var stringValue = substituted;
+          stringValue = substituted;
           substituted = "";
         }
         break;
