@@ -414,10 +414,10 @@ function UriTemplate(template) {
   /**
    * @type {{
    *   (
-   *     callback: (varName: string) => string | {[key: string]: string}
+   *     callback: (varName: string) => undefined | string | {[key: string]: string}
    *   ): string;
    *   (
-   *     vars: {[key: string]: string | {[key: string]: string}}
+   *     vars: {[key: string]: undefined | string | {[key: string]: string}}
    *   ): string
    * }}
    */
@@ -507,7 +507,7 @@ UriTemplate.prototype = {
   },
 
   /**
-   * @type {(vars: {[key: string]: string|{[key: string]: string}}) => string}
+   * @type {(vars: {[key: string]: undefined|string|{[key: string]: string}}) => string}
    */
   fillFromObject: function (obj) {
     return this.fill(obj);

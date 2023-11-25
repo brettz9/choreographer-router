@@ -5,6 +5,19 @@ import Router from './router.js'
  */
 
 /**
+ * @typedef {string|Location|SceneCallback|
+ *   {tagName: string}|{redirect: URL}|{callback: SceneCallback}
+ * } SceneOptions
+ */
+
+/**
+ * @typedef {[
+ *   pattern: string,
+ *   options: SceneOptions
+ * ]} Scene
+ */
+
+/**
  * @typedef {(pattern: string, params: Params) => void} SceneCallback
  */
 
@@ -66,11 +79,7 @@ export default class Choreographer extends Router {
   /**
    * @param {{
    *   stage: Element,
-   *   scenes: [
-   *     pattern: string,
-   *     options: string|Location|SceneCallback|{tagName: string}|{redirect: URL}|
-   *       {callback: SceneCallback}
-   *   ][]
+   *   scenes: Scene[]
    * }} cfg
    */
   constructor ({ stage, scenes }) {
