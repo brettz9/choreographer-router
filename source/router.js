@@ -21,7 +21,10 @@ export default class Router {
       this.route(pattern, handler)
     }
 
-    document.addEventListener('click', (event) => {
+    /**
+     * @param {Event} event
+     */
+    const clickListener = (event) => {
       const elementNode = Node.ELEMENT_NODE
       for (const target of /** @type {(HTMLAnchorElement)[]} */ (event.composedPath())) {
         if (target.nodeType === elementNode && target.localName === 'a') {
@@ -33,11 +36,22 @@ export default class Router {
           }
         }
       }
-    })
+    };
 
-    window.addEventListener('popstate', (event) => {
+    /**
+     * @param {Event} event
+     */
+    const popstateListener = (event) => {
       this.trigger(location)
-    })
+    };
+
+    document.addEventListener('click', clickListener)
+    window.addEventListener('popstate', popstateListener)
+
+    this.close = () => {
+      document.removeEventListener('click', clickListener);
+      window.removeEventListener('popstate', popstateListener);
+    };
 
     if (document.readyState === 'interactive' ||
         document.readyState === 'complete'
