@@ -4,6 +4,7 @@
   "description": "Client side router for Web Components using URI Templates",
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
   "license": "ISC",
+  "type": "module",
   "main": "source/index.js",
   "types": "./dist/index.d.ts",
   "module": "source/index.js",
