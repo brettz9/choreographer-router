@@ -36,22 +36,22 @@ export default class Router {
           }
         }
       }
-    };
+    }
 
     /**
      * @param {Event} event
      */
     const popstateListener = (event) => {
       this.trigger(location)
-    };
+    }
 
     document.addEventListener('click', clickListener)
     window.addEventListener('popstate', popstateListener)
 
     this.close = () => {
-      document.removeEventListener('click', clickListener);
-      window.removeEventListener('popstate', popstateListener);
-    };
+      document.removeEventListener('click', clickListener)
+      window.removeEventListener('popstate', popstateListener)
+    }
 
     if (document.readyState === 'interactive' ||
         document.readyState === 'complete'
