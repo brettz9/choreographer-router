@@ -1,3 +1,5 @@
+/* globals PopStateEvent, Node, location */
+
 import UriTemplate from './uri-template.js'
 
 /**

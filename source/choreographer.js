@@ -1,3 +1,4 @@
+/* globals PopStateEvent */
 import Router from './router.js'
 
 /**
