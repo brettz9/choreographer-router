@@ -18,6 +18,8 @@ export default class Router {
   constructor (routes = new Map(), fallback = () => {}) {
     this.routes = new Map()
     this.fallback = fallback
+    /** @type {string|undefined} */
+    this.path = undefined
 
     for (const [pattern, handler] of routes) {
       this.route(pattern, handler)
@@ -84,7 +86,6 @@ export default class Router {
     if (path === this.path) {
       return
     } else {
-      /** @type {string} */
       this.path = path
     }
 

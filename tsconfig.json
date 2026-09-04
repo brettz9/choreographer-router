@@ -11,6 +11,7 @@
     "declarationMap": true,
     "strict": true,
     "target": "es2017",
+    "rootDir": "source",
     "outDir": "dist"
   },
   "include": ["source/**/*.js"],

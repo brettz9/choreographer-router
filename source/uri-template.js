@@ -54,7 +54,7 @@ function notReallyPercentEncode(string) {
 function uriTemplateSubstitution(spec) {
   let modifier = "";
   if (uriTemplateGlobalModifiers[
-    /** @type {keyof uriTemplateGlobalModifiers} */ (spec.charAt(0))
+    /** @type {keyof typeof uriTemplateGlobalModifiers} */ (spec.charAt(0))
   ]) {
     modifier = spec.charAt(0);
     spec = spec.slice(1);
@@ -107,13 +107,13 @@ function uriTemplateSubstitution(spec) {
       truncate = parseInt(parts[1]);
     }
 
-    /** @type {{[key in keyof uriTemplateSuffices]?: true}} */
+    /** @type {{[key in keyof typeof uriTemplateSuffices]?: true}} */
     const suffices = {};
     while (uriTemplateSuffices[
-      /** @type {keyof uriTemplateSuffices} */
+      /** @type {keyof typeof uriTemplateSuffices} */
       (varName.charAt(varName.length - 1))
     ]) {
-      suffices[/** @type {keyof uriTemplateSuffices} */ (
+      suffices[/** @type {keyof typeof uriTemplateSuffices} */ (
         varName.charAt(varName.length - 1)
       )] = true;
       varName = varName.substring(0, varName.length - 1);
@@ -380,136 +380,137 @@ function uriTemplateSubstitution(spec) {
 }
 
 /**
- * @param {string} template
+ *
  */
-function UriTemplate(template) {
-  if (!(this instanceof UriTemplate)) {
-    return new UriTemplate(template);
-  }
-  const parts = template.split("{");
-  const textParts = [/** @type {string} */ (parts.shift())];
-  /** @type {string[]} */
-  const prefixes = [];
-
-  /** @type {SubFunction[]} */
-  const substitutions = [];
-
-  /** @type {GuessFunction[]} */
-  const unSubstitutions = [];
-
-  /** @type {string[]} */
-  let varNames = [];
-  while (parts.length > 0) {
-    const part = /** @type {string} */ (parts.shift());
-    const spec = part.split("}")[0];
-    const remainder = part.slice(spec.length + 1);
-    const funcs = uriTemplateSubstitution(spec);
-    substitutions.push(funcs.substitution);
-    unSubstitutions.push(funcs.unSubstitution);
-    prefixes.push(funcs.prefix);
-    textParts.push(remainder);
-    varNames = varNames.concat(funcs.substitution.varNames);
-  }
-
+class UriTemplate {
   /**
-   * @type {{
-   *   (
-   *     callback: (varName: string) => undefined | string | {[key: string]: string}
-   *   ): string;
-   *   (
-   *     vars: {[key: string]: undefined | string | {[key: string]: string}}
-   *   ): string
-   * }}
+   * @param {string} template
    */
-  this.fill = function (valueFunction) {
-    if (valueFunction && typeof valueFunction !== 'function') {
-      const value = valueFunction;
-      valueFunction = function (varName) {
-        return value[varName];
-      };
+  constructor (template) {
+    const parts = template.split("{");
+    const textParts = [/** @type {string} */ (parts.shift())];
+    /** @type {string[]} */
+    const prefixes = [];
+
+    /** @type {SubFunction[]} */
+    const substitutions = [];
+
+    /** @type {GuessFunction[]} */
+    const unSubstitutions = [];
+
+    /** @type {string[]} */
+    let varNames = [];
+    while (parts.length > 0) {
+      const part = /** @type {string} */ (parts.shift());
+      const spec = part.split("}")[0];
+      const remainder = part.slice(spec.length + 1);
+      const funcs = uriTemplateSubstitution(spec);
+      substitutions.push(funcs.substitution);
+      unSubstitutions.push(funcs.unSubstitution);
+      prefixes.push(funcs.prefix);
+      textParts.push(remainder);
+      varNames = varNames.concat(funcs.substitution.varNames);
     }
 
-    let result = textParts[0];
-    for (let i = 0; i < substitutions.length; i++) {
-      const substitution = substitutions[i];
-      result += substitution(valueFunction);
-      result += textParts[i + 1];
-    }
-    return result;
-  };
-
-  /**
-   * @param {string} substituted
-   * @returns {Params | undefined}
-   */
-  this.fromUri = function (substituted) {
-    /** @type {{[key: string]: string}} */
-    const result = {};
-    for (let i = 0; i < textParts.length; i++) {
-      const part = textParts[i];
-      if (substituted.substring(0, part.length) !== part) {
-        return undefined;
+    /**
+     * @type {{
+     *   (
+     *     callback: (varName: string) => undefined | string | {[key: string]: string}
+     *   ): string;
+     *   (
+     *     vars: {[key: string]: undefined | string | {[key: string]: string}}
+     *   ): string
+     * }}
+     */
+    this.fill = function (valueFunction) {
+      if (valueFunction && typeof valueFunction !== 'function') {
+        const value = valueFunction;
+        valueFunction = function (varName) {
+          return value[varName];
+        };
       }
-      substituted = substituted.slice(part.length);
-      if (i >= textParts.length - 1) {
-        if (substituted == "") {
-          break;
-        } else {
+
+      let result = textParts[0];
+      for (let i = 0; i < substitutions.length; i++) {
+        const substitution = substitutions[i];
+        result += substitution(valueFunction);
+        result += textParts[i + 1];
+      }
+      return result;
+    };
+
+    /**
+     * @param {string} substituted
+     * @returns {Params | undefined}
+     */
+    this.fromUri = function (substituted) {
+      /** @type {{[key: string]: string}} */
+      const result = {};
+      for (let i = 0; i < textParts.length; i++) {
+        const part = textParts[i];
+        if (substituted.substring(0, part.length) !== part) {
           return undefined;
         }
-      }
-      let nextPart = textParts[i + 1];
-      let offset = i;
-      let stringValue;
-      while (true) {
-        if (offset == textParts.length - 2) {
-          const endPart = substituted.slice(substituted.length - nextPart.length);
-          if (endPart !== nextPart) {
+        substituted = substituted.slice(part.length);
+        if (i >= textParts.length - 1) {
+          if (substituted == "") {
+            break;
+          } else {
             return undefined;
           }
-          stringValue = substituted.substring(0, substituted.length - nextPart.length);
-          substituted = endPart;
-        } else if (nextPart) {
-          const nextPartPos = substituted.indexOf(nextPart);
-          stringValue = substituted.substring(0, nextPartPos);
-          substituted = substituted.slice(nextPartPos);
-        } else if (prefixes[offset + 1]) {
-          let nextPartPos = substituted.indexOf(prefixes[offset + 1]);
-          if (nextPartPos === -1) nextPartPos = substituted.length;
-          stringValue = substituted.substring(0, nextPartPos);
-          substituted = substituted.slice(nextPartPos);
-        } else if (textParts.length > offset + 2) {
-          // If the separator between this variable and the next is blank (with no prefix), continue onwards
-          offset++;
-          nextPart = textParts[offset + 1];
-          continue;
-        } else {
-          stringValue = substituted;
-          substituted = "";
         }
-        break;
+        let nextPart = textParts[i + 1];
+        let offset = i;
+        let stringValue;
+        while (true) {
+          if (offset == textParts.length - 2) {
+            const endPart = substituted.slice(substituted.length - nextPart.length);
+            if (endPart !== nextPart) {
+              return undefined;
+            }
+            stringValue = substituted.substring(0, substituted.length - nextPart.length);
+            substituted = endPart;
+          } else if (nextPart) {
+            const nextPartPos = substituted.indexOf(nextPart);
+            stringValue = substituted.substring(0, nextPartPos);
+            substituted = substituted.slice(nextPartPos);
+          } else if (prefixes[offset + 1]) {
+            let nextPartPos = substituted.indexOf(prefixes[offset + 1]);
+            if (nextPartPos === -1) nextPartPos = substituted.length;
+            stringValue = substituted.substring(0, nextPartPos);
+            substituted = substituted.slice(nextPartPos);
+          } else if (textParts.length > offset + 2) {
+            // If the separator between this variable and the next is blank (with no prefix), continue onwards
+            offset++;
+            nextPart = textParts[offset + 1];
+            continue;
+          } else {
+            stringValue = substituted;
+            substituted = "";
+          }
+          break;
+        }
+        unSubstitutions[i](stringValue, result);
       }
-      unSubstitutions[i](stringValue, result);
+      return result;
     }
-    return result;
-  }
-  this.varNames = varNames;
+    this.varNames = varNames;
 
-  /** @type {string} */
-  this.template = template;
-}
-UriTemplate.prototype = {
+    /** @type {string} */
+    this.template = template;
+  }
+
   /**
    * @returns {string}
    */
-  toString: function () {
+  toString () {
     return this.template;
-  },
+  }
 
   /**
    * @type {(vars: {[key: string]: undefined|string|{[key: string]: string}}) => string}
    */
-  fillFromObject: function (obj) {
+  fillFromObject (obj) {
     return this.fill(obj);
   }
 };

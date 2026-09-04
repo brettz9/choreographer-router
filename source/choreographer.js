@@ -22,60 +22,6 @@ import Router from './router.js'
  * @typedef {(pattern: string, params: Params) => void} SceneCallback
  */
 
-/**
- * @this {Choreographer}
- * @param {string} pattern
- * @param {Params} params
- * @param {{
- *   tagName?: string
- *   redirect?: URL
- *   callback?: SceneCallback
- * }} cfg
- */
-function onRoute (pattern, params, { tagName, callback, redirect }) {
-  if (callback) {
-    if (this.scene !== undefined) {
-      const scene = this.scene
-      delete this.scene
-      scene.remove()
-    }
-    callback.call(this, pattern, params)
-  }
-
-  if (redirect) {
-    window.history.replaceState(null, '', redirect)
-    window.dispatchEvent(new PopStateEvent('popstate'))
-  }
-
-  if (tagName) {
-    if (this.scene !== undefined &&
-      this.scene.localName === tagName
-    ) {
-      Object.assign(this.scene.dataset, params)
-    } else {
-      const scene = document.createElement(tagName)
-      Object.assign(scene.dataset, params)
-      if (this.scene === undefined) {
-        this.stage.appendChild(scene)
-      } else {
-        this.stage.replaceChild(scene, this.scene)
-      }
-      this.scene = scene
-    }
-  }
-}
-
-/**
- * @this {Choreographer}
- * @param {string} url
- */
-function onFallback (url) {
-  if (this.scene) {
-    this.stage.removeChild(this.scene)
-    delete this.scene
-  }
-}
-
 export default class Choreographer extends Router {
   /**
    * @param {{
@@ -99,8 +45,7 @@ export default class Choreographer extends Router {
       /**
        * @param {Params} params
        */
-      const handler = (params) => onRoute.call(
-        this,
+      const handler = (params) => this.#onRoute(
         pattern,
         params,
         /**
@@ -116,10 +61,62 @@ export default class Choreographer extends Router {
       )
       routes.set(pattern, handler)
     }
-    super(routes, (url) => onFallback.call(this, url))
+    super(routes, (url) => this.#onFallback(url))
     this.stage = stage
 
     /** @type {HTMLElement|undefined} */
     this.scene = undefined
+  }
+
+  /**
+   * @param {string} url
+   */
+  #onFallback (url) {
+    if (this.scene) {
+      this.stage.removeChild(this.scene)
+      delete this.scene
+    }
+  }
+
+  /**
+   * @param {string} pattern
+   * @param {Params} params
+   * @param {{
+   *   tagName?: string
+   *   redirect?: URL
+   *   callback?: SceneCallback
+   * }} cfg
+   */
+  #onRoute (pattern, params, { tagName, callback, redirect }) {
+    if (callback) {
+      if (this.scene !== undefined) {
+        const scene = this.scene
+        delete this.scene
+        scene.remove()
+      }
+      callback.call(this, pattern, params)
+    }
+
+    if (redirect) {
+      window.history.replaceState(null, '', redirect)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
+
+    if (tagName) {
+      if (this.scene !== undefined &&
+        this.scene.localName === tagName
+      ) {
+        Object.assign(this.scene.dataset, params)
+      } else {
+        const scene = document.createElement(tagName)
+        Object.assign(scene.dataset, params)
+        if (this.scene === undefined) {
+          this.stage.appendChild(scene)
+        } else {
+          this.stage.replaceChild(scene, this.scene)
+        }
+        this.scene = scene
+      }
+    }
   }
 }
