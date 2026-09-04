@@ -1,14 +1,18 @@
 {
-  "name": "choreographer-router",
-  "version": "1.0.2",
+  "name": "orchestrator-router",
+  "version": "2.0.0",
   "description": "Client side router for Web Components using URI Templates",
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
+  "contributors": ["Brett Zamir"],
   "license": "ISC",
   "type": "module",
   "main": "source/index.js",
   "types": "./dist/index.d.ts",
   "module": "source/index.js",
-  "repository": "gitlab:sebdeckers/choreographer-router",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:brettz9/orchestrator-router.git"
+  },
   "scripts": {
     "tsc": "tsc",
     "test": "standard --verbose | snazzy"

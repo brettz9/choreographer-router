@@ -1,14 +1,14 @@
-# choreographer-router 💃🕺
+# orchestrator-router 💃🕺
 
 A client-side router for web apps using Web Components and URI Templates.
 
 ## Usage
 
 ```js
-import { Choreographer, Router, UriTemplate }
-  from 'choreographer-router'
+import { Orchestrator, Router, UriTemplate }
+  from 'orchestrator-router'
 
-const choreographer = new Choreographer({
+const orchestrator = new Orchestrator({
   stage: document.body,
   scenes: [
     // Static route renders the <app-signup> custom element
@@ -39,9 +39,9 @@ Code: [source/router.js](./source/router.js)
 
 The History API and link click trapping. The [`popstate` event](https://developer.mozilla.org/en-US/docs/Web/API/Document/defaultView/popstate_event) is fired whenever a navigation occurs.
 
-### Class: Choreographer({ stage, scenes }, [fallback])
+### Class: Orchestrator({ stage, scenes }, [fallback])
 
-Code: [source/choreographer.js](./source/choreographer.js)
+Code: [source/orchestrator.js](./source/orchestrator.js)
 
 Associates Web Component element names with specific routes. Creates and removes Web Components (custom HTML elements) as scenes on the stage.
 
@@ -54,7 +54,3 @@ Scene content can be:
 - An absolute URL instance to which to redirect.
 - A tag name to render, for example a custom element. If a route change renders the same tag name as the current scene, only its dataset attributes are updated without recreating the entire scene. Use the `attributeChangedCallback` hook of Custom Elements to handle these changes.
 - A callback function to invoke with arguments `pattern` and `params`. The current stage will be cleared.
-
-## See Also
-
-- [Commons Host website dashboard](https://gitlab.com/commonshost/website) uses Choreographer for client side routing.
