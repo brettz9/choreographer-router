@@ -22,7 +22,7 @@ import Router from './router.js'
  * @typedef {(pattern: string, params: Params) => void} SceneCallback
  */
 
-export default class Choreographer extends Router {
+export default class Orchestrator extends Router {
   /**
    * @param {{
    *   stage: Element,
