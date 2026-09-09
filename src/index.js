@@ -10,6 +10,6 @@
  * @typedef {import('./orchestrator.js').SceneOptions} SceneOptions
  */
 
-export { default as UriTemplate } from './uri-template.js'
-export { default as Router } from './router.js'
-export { default as Orchestrator } from './orchestrator.js'
+export {default as UriTemplate} from './uri-template.js';
+export {default as Router} from './router.js';
+export {default as Orchestrator} from './orchestrator.js';

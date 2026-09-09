@@ -1,5 +1,5 @@
-/* globals PopStateEvent */
-import Router from './router.js'
+/* globals document, PopStateEvent -- Polyfill or browser */
+import Router from './router.js';
 
 /**
  * @typedef {import('./router.js').Params} Params
@@ -22,6 +22,9 @@ import Router from './router.js'
  * @typedef {(pattern: string|URLPattern, params: Params) => void} SceneCallback
  */
 
+/**
+ *
+ */
 export default class Orchestrator extends Router {
   /**
    * @param {{
@@ -31,17 +34,19 @@ export default class Orchestrator extends Router {
    * }} cfg `patterns` chooses how a scene key given as a plain string is
    *   interpreted (`'urlpattern'`, the default, or `'uritemplate'`).
    */
-  constructor ({ stage, scenes, patterns }) {
-    const routes = new Map()
-    for (let [pattern, options] of new Map(scenes).entries()) {
+  constructor ({stage, scenes, patterns}) {
+    const routes = new Map();
+    // eslint-disable-next-line @stylistic/max-len -- Long
+    // eslint-disable-next-line prefer-const, unicorn/no-unreadable-for-of-expression -- Convenient
+    for (let [pattern, options] of new Map(scenes)) {
       if (typeof options === 'string') {
-        options = { tagName: options }
+        options = {tagName: options};
       }
-      if (options instanceof URL) {
-        options = { redirect: options }
+      if (Object.prototype.toString.call(options) === '[object URL]') {
+        options = {redirect: options};
       }
       if (typeof options === 'function') {
-        options = { callback: options }
+        options = {callback: options};
       }
 
       /**
@@ -60,24 +65,26 @@ export default class Orchestrator extends Router {
          * }}
          */
         (options)
-      )
-      routes.set(pattern, handler)
+      );
+      routes.set(pattern, handler);
     }
-    super(routes, (url) => this.#onFallback(url), { patterns })
-    this.stage = stage
+    super(routes, (/* url */) => this.#onFallback(), {patterns});
+    this.stage = stage;
 
     /** @type {HTMLElement|undefined} */
-    this.scene = undefined
+    this.scene = undefined;
   }
 
   /**
-   * @param {string} url
+   * @returns {void}
    */
-  #onFallback (url) {
-    if (this.scene) {
-      this.stage.removeChild(this.scene)
-      delete this.scene
+  #onFallback () {
+    if (!this.scene) {
+      return;
     }
+
+    this.scene.remove();
+    delete this.scene;
   }
 
   /**
@@ -88,36 +95,37 @@ export default class Orchestrator extends Router {
    *   redirect?: URL
    *   callback?: SceneCallback
    * }} cfg
+   * @returns {void}
    */
-  #onRoute (pattern, params, { tagName, callback, redirect }) {
+  #onRoute (pattern, params, {tagName, callback, redirect}) {
     if (callback) {
       if (this.scene !== undefined) {
-        const scene = this.scene
-        delete this.scene
-        scene.remove()
+        const {scene} = this;
+        delete this.scene;
+        scene.remove();
       }
-      callback.call(this, pattern, params)
+      callback.call(this, pattern, params);
     }
 
     if (redirect) {
-      window.history.replaceState(null, '', redirect)
-      window.dispatchEvent(new PopStateEvent('popstate'))
+      globalThis.history.replaceState(null, '', redirect);
+      globalThis.dispatchEvent(new PopStateEvent('popstate'));
     }
 
     if (tagName) {
       if (this.scene !== undefined &&
         this.scene.localName === tagName
       ) {
-        Object.assign(this.scene.dataset, params)
+        Object.assign(this.scene.dataset, params);
       } else {
-        const scene = document.createElement(tagName)
-        Object.assign(scene.dataset, params)
+        const scene = document.createElement(tagName);
+        Object.assign(scene.dataset, params);
         if (this.scene === undefined) {
-          this.stage.appendChild(scene)
+          this.stage.append(scene);
         } else {
-          this.stage.replaceChild(scene, this.scene)
+          this.stage.replaceChild(scene, this.scene);
         }
-        this.scene = scene
+        this.scene = scene;
       }
     }
   }

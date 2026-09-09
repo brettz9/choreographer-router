@@ -1,6 +1,7 @@
-/* globals PopStateEvent, Node, location, URLPattern */
+/* eslint-disable unicorn/no-unnecessary-global-this -- Easier to polyfill */
+/* globals PopStateEvent, document, Node, location -- Browser or polyfill */
 
-import UriTemplate from './uri-template.js'
+import UriTemplate from './uri-template.js';
 
 /**
  * @typedef {import('./uri-template.js').Params} Params
@@ -22,16 +23,18 @@ import UriTemplate from './uri-template.js'
  */
 
 /** @type {PatternSyntax} */
-const defaultPatternSyntax = 'urlpattern'
+const defaultPatternSyntax = 'urlpattern';
 
 // Base used to resolve the (path-only) strings passed to `trigger`, and any
 // relative pattern strings, into the absolute URLs that `URLPattern` expects.
 // The origin is irrelevant since routes are matched on `pathname`, `search`,
 // and `hash` only.
-const urlPatternBase = 'http://localhost/'
+const urlPatternBase = 'http://localhost/';
 
 // URL components that can carry named/indexed groups worth exposing as params.
-const urlPatternComponents = /** @type {const} */ (['pathname', 'search', 'hash'])
+const urlPatternComponents = /** @type {const} */ (
+  ['pathname', 'search', 'hash']
+);
 
 /**
  * Brand check for a `URLPattern` instance. Prefers the `Symbol.toStringTag`
@@ -44,14 +47,14 @@ const urlPatternComponents = /** @type {const} */ (['pathname', 'search', 'hash'
  */
 function isUrlPattern (value) {
   if (Object.prototype.toString.call(value) === '[object URLPattern]') {
-    return true
+    return true;
   }
   // We can drop the following upon https://github.com/nodejs/node/issues/65924
-  const candidate = /** @type {Partial<URLPattern>} */ (value)
+  const candidate = /** @type {Partial<URLPattern>} */ (value);
   return typeof candidate === 'object' && candidate !== null &&
     typeof candidate.exec === 'function' &&
     typeof candidate.test === 'function' &&
-    typeof candidate.pathname === 'string'
+    typeof candidate.pathname === 'string';
 }
 
 /**
@@ -63,28 +66,31 @@ function isUrlPattern (value) {
  */
 function fromUrlPattern (pattern) {
   return (path) => {
-    const match = pattern.exec(path, urlPatternBase)
+    const match = pattern.exec(path, urlPatternBase);
     if (match === null) {
-      return undefined
+      return undefined;
     }
 
     /** @type {Params} */
-    const params = {}
+    const params = {};
     for (const component of urlPatternComponents) {
       // An unconstrained component matches as a bare `*` wildcard and only
       // contributes a synthetic unnamed group; skip it so parts of the URL the
       // caller did not describe do not leak into the params.
       if (pattern[component] === '*') {
-        continue
+        continue;
       }
+
+      // eslint-disable-next-line @stylistic/max-len -- Long
+      // eslint-disable-next-line unicorn/no-unreadable-for-of-expression -- Readable
       for (const [key, value] of Object.entries(match[component].groups)) {
         if (value !== undefined) {
-          params[key] = value
+          params[key] = value;
         }
       }
     }
-    return params
-  }
+    return params;
+  };
 }
 
 /**
@@ -95,13 +101,16 @@ function fromUrlPattern (pattern) {
  */
 function toPredicate (pattern, syntax) {
   if (isUrlPattern(pattern)) {
-    return fromUrlPattern(pattern)
+    return fromUrlPattern(pattern);
   }
   return syntax === 'uritemplate'
     ? new UriTemplate(pattern).fromUri
-    : fromUrlPattern(new URLPattern(pattern, urlPatternBase))
+    : fromUrlPattern(new URLPattern(pattern, urlPatternBase));
 }
 
+/**
+ *
+ */
 export default class Router {
   /**
    * @param {Map<string|URLPattern, Handler>} routes
@@ -110,54 +119,62 @@ export default class Router {
    *   route pattern given as a plain string is interpreted; it defaults to
    *   `'urlpattern'`. A `URLPattern` instance is always honoured directly.
    */
-  constructor (routes = new Map(), fallback = () => {}, { patterns = defaultPatternSyntax } = {}) {
-    this.routes = new Map()
-    this.fallback = fallback
+  constructor (
+    routes = new Map(),
+    fallback = () => {
+      //
+    },
+    {patterns = defaultPatternSyntax} = {}
+  ) {
+    this.routes = new Map();
+    this.fallback = fallback;
     /** @type {PatternSyntax} */
-    this.patterns = patterns
+    this.patterns = patterns;
     /** @type {string|undefined} */
-    this.path = undefined
+    this.path = undefined;
 
     for (const [pattern, handler] of routes) {
-      this.route(pattern, handler)
+      this.route(pattern, handler);
     }
 
     /**
      * @param {Event} event
      */
     const clickListener = (event) => {
-      const elementNode = Node.ELEMENT_NODE
-      for (const target of /** @type {(HTMLAnchorElement)[]} */ (event.composedPath())) {
+      const elementNode = Node.ELEMENT_NODE;
+      for (const target of /** @type {(HTMLAnchorElement)[]} */ (
+        event.composedPath()
+      )) {
         if (target.nodeType === elementNode && target.localName === 'a') {
-          if (target.origin === window.origin) {
-            event.preventDefault()
-            window.history.pushState(null, '', target.href)
-            window.dispatchEvent(new PopStateEvent('popstate'))
-            break
+          if (target.origin === globalThis.origin) {
+            event.preventDefault();
+            globalThis.history.pushState(null, '', target.href);
+            globalThis.dispatchEvent(new PopStateEvent('popstate'));
+            break;
           }
         }
       }
-    }
+    };
 
     /**
-     * @param {Event} event
+     * @returns {void}
      */
-    const popstateListener = (event) => {
-      this.trigger(location)
-    }
+    const popstateListener = (/* event */) => {
+      this.trigger(location);
+    };
 
-    document.addEventListener('click', clickListener)
-    window.addEventListener('popstate', popstateListener)
+    document.addEventListener('click', clickListener);
+    globalThis.addEventListener('popstate', popstateListener);
 
     this.close = () => {
-      document.removeEventListener('click', clickListener)
-      window.removeEventListener('popstate', popstateListener)
-    }
+      document.removeEventListener('click', clickListener);
+      globalThis.removeEventListener('popstate', popstateListener);
+    };
 
     if (document.readyState === 'interactive' ||
         document.readyState === 'complete'
     ) {
-      window.setTimeout(() => this.trigger(location), 0)
+      globalThis.setTimeout(() => this.trigger(location), 0);
     }
   }
 
@@ -170,35 +187,37 @@ export default class Router {
    * @param {Handler} handler
    * @param {PatternSyntax} [syntax] Overrides the instance's `patterns` setting
    *   for this one route.
+   * @returns {Router}
    */
   route (pattern, handler, syntax = this.patterns) {
-    this.routes.set(toPredicate(pattern, syntax), handler)
-    return this
+    this.routes.set(toPredicate(pattern, syntax), handler);
+    return this;
   }
 
   /**
    * @param {string|Location} url
+   * @returns {Router}
    */
   trigger (url = '') {
     const path = typeof url === 'string'
       ? url
-      : url.pathname + url.search + url.hash
+      : url.pathname + url.search + url.hash;
 
     if (path === this.path) {
-      return
-    } else {
-      this.path = path
+      return;
     }
+    this.path = path;
+
 
     for (const [predicate, handler] of this.routes) {
-      const params = predicate(path)
+      const params = predicate(path);
       if (params !== undefined) {
-        handler(params)
-        return this
+        handler(params);
+        return this;
       }
     }
 
-    this.fallback(path)
-    return this
+    this.fallback(path);
+    return this;
   }
 }

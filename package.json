@@ -3,12 +3,14 @@
   "version": "3.0.0",
   "description": "Client side router for Web Components using URLPattern (or URI Templates)",
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
-  "contributors": ["Brett Zamir"],
+  "contributors": [
+    "Brett Zamir"
+  ],
   "license": "ISC",
   "type": "module",
-  "main": "source/index.js",
+  "main": "src/index.js",
   "types": "./dist/index.d.ts",
-  "module": "source/index.js",
+  "module": "src/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:brettz9/orchestrator-router.git"
@@ -17,11 +19,19 @@
     "node": ">=24.16.0"
   },
   "scripts": {
-    "prepublishOnly": "tsc",
+    "prepublishOnly": "npm run tsc && npm run tsc-prod",
     "tsc": "tsc",
+    "tsc-prod": "tsc -p tsconfig-prod.json",
+    "lint": "eslint .",
+    "cypress:open": "cypress open --browser chrome",
+    "cypress:run": "cypress run --browser chrome",
     "test": "standard --verbose | snazzy"
   },
   "devDependencies": {
+    "@cypress/code-coverage": "^4.0.3",
+    "cypress": "^16.0.0",
+    "eslint": "^10.10.0",
+    "eslint-config-ash-nazg": "^43.1.7",
     "snazzy": "^9.0.0",
     "standard": "^17.1.2",
     "typescript": "^7.0.2"

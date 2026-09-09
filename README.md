@@ -9,8 +9,8 @@ A client-side router for web apps using Web Components and
 ## Usage
 
 ```js
-import { Orchestrator, Router, UriTemplate }
-  from 'orchestrator-router'
+import {Orchestrator, Router, UriTemplate}
+  from 'orchestrator-router';
 
 const orchestrator = new Orchestrator({
   stage: document.body,
@@ -28,7 +28,7 @@ const orchestrator = new Orchestrator({
     // Catch-all fallback route showing a custom element
     ['/:pathname(.*)', 'app-404']
   ]
-})
+});
 ```
 
 ### String pattern syntax
@@ -58,10 +58,10 @@ const orchestrator = new Orchestrator({
     // Catch-all fallback route showing a custom element
     ['/{pathname}', 'app-404']
   ]
-})
+});
 
 // or, for a plain Router:
-new Router(routes, fallback, { patterns: 'uritemplate' })
+new Router(routes, fallback, {patterns: 'uritemplate'});
 ```
 
 `URLPattern` instances still work as scene keys even when `patterns` is
@@ -71,7 +71,7 @@ new Router(routes, fallback, { patterns: 'uritemplate' })
 
 ### Class: UriTemplate
 
-Code: [source/uri-template.js](./source/uri-template.js)
+Code: [src/uri-template.js](./src/uri-template.js)
 
 Source: https://github.com/geraintluff/uri-templates
 
@@ -79,7 +79,7 @@ URI Templates (RFC6570) implementation.
 
 ### Class: Router
 
-Code: [source/router.js](./source/router.js)
+Code: [src/router.js](./src/router.js)
 
 The History API and link click trapping. The [`popstate` event](https://developer.mozilla.org/en-US/docs/Web/API/Document/defaultView/popstate_event) is fired whenever a navigation occurs.
 
@@ -104,7 +104,7 @@ an unnamed group keyed `"0"`. To keep those out of `params`, a component whose
 pattern is exactly `*` is skipped:
 
 ```js
-new URLPattern({ pathname: '/users/:id' })
+new URLPattern({pathname: '/users/:id'});
 // matching `/users/42?ref=nav` → { id: '42' }, not { id: '42', '0': 'ref=nav' }
 ```
 
@@ -112,17 +112,17 @@ The cost is that a component written as a bare `*` captures nothing; use a named
 group (`/:rest(.*)`) or a non-bare wildcard (`/*`) to capture a catch-all.
 
 ```js
-const router = new Router()
+const router = new Router();
 router.route(
-  new URLPattern({ pathname: '/users/:id/posts/:post' }),
-  ({ id, post }) => { /* ... */ }
-)
-router.route('/books/:isbn', ({ isbn }) => { /* ... */ })
+  new URLPattern({pathname: '/users/:id/posts/:post'}),
+  ({id, post}) => { /* ... */ }
+);
+router.route('/books/:isbn', ({isbn}) => { /* ... */ });
 ```
 
 ### Class: Orchestrator({ stage, scenes, patterns }, [fallback])
 
-Code: [source/orchestrator.js](./source/orchestrator.js)
+Code: [src/orchestrator.js](./src/orchestrator.js)
 
 Associates Web Component element names with specific routes. Creates and removes Web Components (custom HTML elements) as scenes on the stage.
 
