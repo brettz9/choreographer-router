@@ -8,9 +8,9 @@
   ],
   "license": "ISC",
   "type": "module",
-  "main": "src/index.js",
   "types": "./dist/index.d.ts",
-  "module": "src/index.js",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
   "repository": {
     "type": "git",
     "url": "git@github.com:brettz9/orchestrator-router.git"
@@ -19,7 +19,8 @@
     "node": ">=24.16.0"
   },
   "scripts": {
-    "prepublishOnly": "npm run tsc && npm run tsc-prod",
+    "prepublishOnly": "npm run tsc && npm run tsc-prod && npm run attw",
+    "attw": "attw --pack . --profile esm-only node16",
     "tsc": "tsc",
     "tsc-prod": "tsc -p tsconfig-prod.json",
     "lint": "eslint .",
@@ -30,6 +31,7 @@
     "test": "standard --verbose | snazzy"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@babel/core": "^8.0.1",
     "@babel/preset-env": "^7.29.7",
     "@cypress/code-coverage": "^4.0.3",

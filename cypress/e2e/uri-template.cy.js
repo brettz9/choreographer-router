@@ -80,4 +80,20 @@ describe('UriTemplate', () => {
     expect(new UriTemplate('{/first}{/second}').fromUri('/one')).
       to.deep.equal({second: 'one'});
   });
+
+  it('covers repeated, empty, and multi-variable parsing edges', () => {
+    expect(new UriTemplate('{?list*}').fromUri('?list=a&list=b')).
+      to.deep.equal({list: ['a', 'b']});
+    expect(new UriTemplate('{?key,other*}').fromUri('?key=1&other=2&other=3')).
+      to.deep.equal({key: '1', other: ['2', '3']});
+    expect(new UriTemplate('{?empty,filled}').fromUri('?empty=&filled=1')).
+      to.deep.equal({filled: '1'});
+    expect(new UriTemplate('{first,second}').fromUri('one,two')).
+      to.deep.equal({first: 'one', second: 'two'});
+    expect(new UriTemplate('{first,second}').fromUri('one')).
+      to.deep.equal({first: 'one'});
+    expect(new UriTemplate('/users/{id}/profile').fromUri('/users/42')).
+      to.be.undefined;
+    expect(new UriTemplate('?a=&b=1').fromUri('?b=1')).to.deep.equal({b: '1'});
+  });
 });

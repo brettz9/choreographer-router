@@ -57,6 +57,40 @@ describe('Router', () => {
       router.close();
     });
   });
+
+  it('handles same-origin anchor clicks and cleanup', () => {
+    /** @type {unknown[]} */
+    const calls = [];
+    cy.window().then(() => {
+      const router = new Router(new Map([
+        ['/about', () => calls.push('about')]
+      ]), () => calls.push('fallback'));
+
+      const anchor = document.createElement('a');
+      anchor.href = '/about';
+      document.body.append(anchor);
+      anchor.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      }));
+
+      expect(calls).to.deep.equal(['about']);
+      expect(anchor.closest('a')).to.not.be.null;
+      router.close();
+
+      const external = document.createElement('a');
+      external.href = 'https://example.com/other';
+      document.body.append(external);
+      external.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      }));
+      expect(calls).to.deep.equal(['about']);
+      document.body.querySelectorAll('a').forEach((el) => el.remove());
+    });
+  });
 });
 
 describe('Orchestrator', () => {
@@ -119,6 +153,30 @@ describe('Orchestrator', () => {
       ]);
       orchestrator.trigger('/old');
       expect(window.location.pathname).to.equal('/new');
+      expect(stage.children).to.have.length(0);
+      orchestrator.close();
+    });
+  });
+
+  it('removes the existing scene before running a callback', () => {
+    /** @type {unknown[]} */
+    const callbackCalls = [];
+    setup([
+      ['/current', 'current-scene'],
+      [
+        '/callback/:id',
+        /** @type {import('../../src/orchestrator.js').SceneCallback} */
+        ((pattern, params) => {
+          callbackCalls.push([pattern, params]);
+        })
+      ]
+    ]).then(({stage, orchestrator}) => {
+      orchestrator.trigger('/current');
+      expect(stage.children).to.have.length(1);
+      orchestrator.trigger('/callback/9');
+      expect(callbackCalls).to.deep.equal([
+        ['/callback/:id', {id: '9'}]
+      ]);
       expect(stage.children).to.have.length(0);
       orchestrator.close();
     });
