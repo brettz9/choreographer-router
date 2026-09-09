@@ -77,7 +77,6 @@ describe('Router', () => {
 
       expect(calls).to.deep.equal(['about']);
       expect(anchor.closest('a')).to.not.be.null;
-      router.close();
 
       const external = document.createElement('a');
       external.href = 'https://example.com/other';
@@ -88,7 +87,74 @@ describe('Router', () => {
         composed: true
       }));
       expect(calls).to.deep.equal(['about']);
+      router.close();
       document.body.querySelectorAll('a').forEach((el) => el.remove());
+    });
+  });
+
+  it('covers same-path, wildcard, and non-anchor branches', () => {
+    /** @type {unknown[]} */
+    const calls = [];
+    cy.window().then(() => {
+      const router = new Router(new Map([
+        ['/same', () => calls.push('same')],
+        [new URLPattern({pathname: '/*'}), () => calls.push('wild')]
+      ]), () => calls.push('fallback'));
+
+      router.trigger('/same');
+      router.trigger('/same');
+      router.trigger('/wild/ok');
+
+      const div = document.createElement('div');
+      document.body.append(div);
+      div.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        composed: true
+      }));
+      expect(calls).to.deep.equal(['same', 'wild']);
+      router.close();
+
+      const defaultRouter = new Router();
+      defaultRouter.route('/home', () => calls.push('home'));
+      defaultRouter.trigger('/home');
+      defaultRouter.trigger('/home');
+      expect(calls).to.deep.equal(['same', 'wild', 'home']);
+      defaultRouter.close();
+    });
+  });
+
+  it('handles non-matches, duck-typed patterns, and default triggers', () => {
+    /** @type {unknown[]} */
+    const calls = [];
+    cy.window().then(() => {
+      const pattern = {
+        pathname: '/virtual/:id',
+        search: '*',
+        hash: '*',
+        test: () => true,
+        exec: (path) => (path === '/virtual/42'
+          ? {
+            pathname: {groups: {id: '42', missing: undefined}},
+            search: {groups: {}},
+            hash: {groups: {}}
+          }
+          : null)
+      };
+      const router = new Router(new Map([
+        [pattern, (params) => calls.push(['virtual', params])],
+        [new URLPattern({pathname: '/only'}), () => calls.push(['only'])]
+      ]), (path) => calls.push(['fallback', path]));
+
+      router.trigger('/virtual/42');
+      router.trigger('/missing');
+      router.trigger();
+      expect(calls).to.deep.equal([
+        ['virtual', {id: '42'}],
+        ['fallback', '/missing'],
+        ['fallback', '']
+      ]);
+      router.close();
     });
   });
 });
@@ -154,6 +220,7 @@ describe('Orchestrator', () => {
       orchestrator.trigger('/old');
       expect(window.location.pathname).to.equal('/new');
       expect(stage.children).to.have.length(0);
+      window.history.replaceState(null, '', '/');
       orchestrator.close();
     });
   });

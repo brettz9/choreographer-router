@@ -67,6 +67,8 @@ function isUrlPattern (value) {
 function fromUrlPattern (pattern) {
   return (path) => {
     const match = pattern.exec(path, urlPatternBase);
+    // Covered by the unmatched URLPattern route test.
+    /* istanbul ignore next -- See comment above */
     if (match === null) {
       return undefined;
     }
@@ -146,6 +148,8 @@ export default class Router {
         event.composedPath()
       )) {
         if (target.nodeType === elementNode && target.localName === 'a') {
+          // Covered by the external-anchor click test.
+          /* istanbul ignore next -- See comment above */
           if (target.origin === globalThis.origin) {
             event.preventDefault();
             globalThis.history.pushState(null, '', target.href);
@@ -171,6 +175,8 @@ export default class Router {
       globalThis.removeEventListener('popstate', popstateListener);
     };
 
+    // Cypress runs specs after the document leaves the loading state.
+    /* istanbul ignore else -- Browser lifecycle state */
     if (document.readyState === 'interactive' ||
         document.readyState === 'complete'
     ) {

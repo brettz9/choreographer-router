@@ -1,3 +1,9 @@
+[![npm](https://img.shields.io/npm/v/orchestrator-router.svg)](https://www.npmjs.com/package/orchestrator-router)
+[![Dependencies](https://img.shields.io/librariesio/github/brettz9/orchestrator-router.svg)](https://libraries.io/github/brettz9/orchestrator-router)
+
+[![Tests badge](https://raw.githubusercontent.com/brettz9/orchestrator-router/master/doc-includes/tests-badge.svg?sanitize=true)](doc-includes/tests-badge.svg)
+[![Coverage badge](https://raw.githubusercontent.com/brettz9/orchestrator-router/master/doc-includes/coverage-badge.svg?sanitize=true)](doc-includes/coverage-badge.svg)
+
 # orchestrator-router 💃🕺
 
 **This is a fork of [choregrapher-router](https://gitlab.com/sebdeckers/choreographer-router)**

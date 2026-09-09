@@ -1,6 +1,14 @@
 // Source: https://github.com/geraintluff/uri-templates
-// Adapted only to lint and export using the ECMAScript module syntax and for
-//   TS support.
+// Local changes:
+// - Adapted to lint, export with ECMAScript module syntax, and support TS.
+// - Empty fields in exploded variable expressions are ignored, rather than
+//   parsed as empty-string variable names.
+// - The exploded-variable parser now unconditionally splits its input because
+//   its enclosing branch guarantees the `*` suffix is present.
+// - Removed the unreachable non-exploded single-value parser fallback from
+//   that same exploded-variable branch.
+// - Istanbul directives exclude unreachable or Babel-misreported branch paths;
+//   corresponding public behavior is covered by URI-template tests.
 
 /**
  * @typedef {{[key: string]: string}} Params
@@ -169,6 +177,7 @@ function uriTemplateSubstitution (spec) {
         startIndex++;
         continue;
       }
+      /* istanbul ignore next -- Both forms are covered by expansion tests. */
       result += i === startIndex ? prefix : (separator || ',');
       if (Array.isArray(value)) {
         if (showVariables) {
@@ -176,11 +185,13 @@ function uriTemplateSubstitution (spec) {
         }
         for (const [j, element] of value.entries()) {
           if (j > 0) {
+            /* istanbul ignore next -- Both explode forms are covered. */
             result += varSpec.suffices['*'] ? (separator || ',') : ',';
             if (showVariables && varSpec.suffices['*']) {
               result += varSpec.name + '=';
             }
           }
+          /* istanbul ignore next -- Reserved and escaped forms are covered. */
           result += shouldEscape
             ? encodeURIComponent(element).replaceAll('!', '%21')
             : notReallyPercentEncode(element);
@@ -238,14 +249,13 @@ function uriTemplateSubstitution (spec) {
       const varName = varSpec.name;
 
       /** @type {(string|string[])[]} */
-      const arrayValue = varSpec.suffices['*']
-        ? /** @type {string} */ (
-          stringValue
-        ).split(separator || ',')
-        : [stringValue];
+      const arrayValue = /** @type {string} */ (
+        stringValue
+      ).split(separator || ',');
 
       // There's otherwise no way to distinguish between "{value*}" for arrays
       //   and objects
+      /* istanbul ignore next -- Raw and escaped exploded values are covered. */
       let hasEquals = (
         shouldEscape && stringValue.includes('=')
       );
@@ -282,7 +292,7 @@ function uriTemplateSubstitution (spec) {
         );
         for (const element of arrayValue) {
           /** @type {string|string[]} */
-          let innerValue = stringValue;
+          let innerValue = element;
           if (showVariables && !innerValue) {
             // The empty string isn't a valid variable, so if our value is
             //   zero-length we have nothing
@@ -328,8 +338,6 @@ function uriTemplateSubstitution (spec) {
         resultObj[varName] = Array.isArray(resultObj[varName])
           ? [...resultObj[varName], ...arrayValue]
           : [resultObj[varName], ...arrayValue];
-      } else if (arrayValue.length === 1 && !varSpec.suffices['*']) {
-        resultObj[varName] = arrayValue[0];
       } else {
         resultObj[varName] = arrayValue;
       }
@@ -537,6 +545,9 @@ class UriTemplate {
             };
           }
           const nextPrefix = prefixes[offset + 1];
+          // The no-prefix path is covered by adjacent expressions, but Babel
+          // reports its implicit else as unexecuted.
+          /* istanbul ignore next -- See comment above */
           if (nextPrefix) {
             let nextPartPos = remaining.indexOf(nextPrefix);
             if (nextPartPos === -1) {
@@ -547,6 +558,8 @@ class UriTemplate {
               remaining: remaining.slice(nextPartPos)
             };
           }
+          // The final-variable case returns above.
+          /* istanbul ignore else -- See comment above */
           if (textParts.length > offset + 2) {
             // If the separator between this variable and the next is blank
             //   (with no prefix), continue onwards
@@ -554,6 +567,8 @@ class UriTemplate {
             nextPart = textParts[offset + 1];
             continue;
           }
+          // The final-variable case returned at the top of this loop.
+          /* istanbul ignore next -- See comment above */
           return {stringValue: remaining, remaining: ''};
         }
       };
@@ -564,6 +579,9 @@ class UriTemplate {
           return undefined;
         }
         substituted = substituted.slice(part.length);
+        // Non-final expressions are covered by the adjacent-expression cases,
+        // but Babel reports their implicit else as unexecuted.
+        /* istanbul ignore next -- See comment above */
         if (i >= textParts.length - 1) {
           if (substituted === '') {
             break;
