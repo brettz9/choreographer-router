@@ -1,3 +1,4 @@
 allowBuilds:
   cypress: true
+  is-hidden-file: true
   unrs-resolver: true

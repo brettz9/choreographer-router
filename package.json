@@ -23,15 +23,25 @@
     "tsc": "tsc",
     "tsc-prod": "tsc -p tsconfig-prod.json",
     "lint": "eslint .",
+    "start": "open http://127.0.0.1:8115/coverage/ && static -p 8115",
     "cypress:open": "cypress open --browser chrome",
     "cypress:run": "cypress run --browser chrome",
+    "coverage": "pnpm cypress:run && nyc report --check-coverage",
     "test": "standard --verbose | snazzy"
   },
   "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^7.29.7",
     "@cypress/code-coverage": "^4.0.3",
+    "@cypress/webpack-preprocessor": "^6.0.4",
+    "@node-static/node-static": "^0.9.1",
+    "babel-loader": "^10.1.1",
+    "babel-plugin-istanbul": "^7.0.1",
     "cypress": "^16.0.0",
     "eslint": "^10.10.0",
     "eslint-config-ash-nazg": "^43.1.7",
+    "nyc": "^18.0.0",
+    "open-cli": "^9.0.0",
     "snazzy": "^9.0.0",
     "standard": "^17.1.2",
     "typescript": "^7.0.2"
@@ -43,5 +53,25 @@
     "env": {
       "browser": true
     }
+  },
+  "nyc": {
+    "check-coverage": true,
+    "all": true,
+    "include": [
+      "src/**/*.js"
+    ],
+    "exclude": [
+      "src/index.js"
+    ],
+    "report-dir": "coverage",
+    "reporter": [
+      "text",
+      "html",
+      "lcov"
+    ],
+    "lines": 100,
+    "statements": 100,
+    "functions": 100,
+    "branches": 100
   }
 }

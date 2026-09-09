@@ -1,6 +1,9 @@
 import ashNazg from 'eslint-config-ash-nazg';
 
 export default [
+  {
+    ignores: ['coverage/**', '.nyc_output/**']
+  },
   ...ashNazg(['sauron', 'node']),
   {
     files: ['**/*.md/*.js'],

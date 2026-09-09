@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "istanbul",
+      {
+        "include": ["src/**/*.js"],
+        "exclude": ["cypress/**/*.js"]
+      }
+    ]
+  ]
+}

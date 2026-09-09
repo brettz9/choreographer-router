@@ -2,3 +2,4 @@
 cypress
 eslint.config.js
 cypress.config.js
+coverage
