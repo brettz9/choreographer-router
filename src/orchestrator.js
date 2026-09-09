@@ -43,7 +43,9 @@ export default class Orchestrator extends Router {
         options = {tagName: options};
       }
       if (Object.prototype.toString.call(options) === '[object URL]') {
-        options = {redirect: options};
+        options = {
+          redirect: /** @type {URL} */ (/** @type {unknown} */ (options))
+        };
       }
       if (typeof options === 'function') {
         options = {callback: options};

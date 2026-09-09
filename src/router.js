@@ -204,7 +204,7 @@ export default class Router {
       : url.pathname + url.search + url.hash;
 
     if (path === this.path) {
-      return;
+      return this;
     }
     this.path = path;
 

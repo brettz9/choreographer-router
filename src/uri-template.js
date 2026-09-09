@@ -25,8 +25,12 @@
  */
 
 /**
+ * `resultObj` is a dynamically shaped accumulator: the parser writes strings,
+ *   arrays, and nested objects onto it keyed by variable name, so reads are
+ *   narrowed at each use site.
  * @typedef {(
- * stringValue: string|string[], resultObj: any
+ *   stringValue: string|string[],
+ *   resultObj: {[key: string]: unknown}
  * ) => void|null} GuessFunction
  */
 
@@ -128,7 +132,7 @@ function uriTemplateSubstitution (spec) {
     if (varName.includes(':')) {
       const parts = varName.split(':');
       varName = parts[0];
-      truncate = parseInt(parts[1], 10);
+      truncate = Number(parts[1]);
     }
 
     /** @type {{[key in keyof typeof uriTemplateSuffices]?: true}} */
@@ -136,10 +140,10 @@ function uriTemplateSubstitution (spec) {
     while (Object.hasOwn(
       uriTemplateSuffices,
       /** @type {keyof typeof uriTemplateSuffices} */
-      (varName.charAt(varName.length - 1))
+      (varName.at(-1))
     )) {
       suffices[/** @type {keyof typeof uriTemplateSuffices} */ (
-        varName.charAt(varName.length - 1)
+        varName.at(-1)
       )] = true;
       varName = varName.slice(0, Math.max(0, varName.length - 1));
     }
@@ -159,7 +163,8 @@ function uriTemplateSubstitution (spec) {
     let startIndex = 0;
     for (const [i, varSpec] of varSpecs.entries()) {
       let value = valueFunction(varSpec.name);
-      if (value == null || (Array.isArray(value) && value.length === 0) ||
+      if (value === null || value === undefined ||
+        (Array.isArray(value) && value.length === 0) ||
         (typeof value === 'object' && Object.keys(value).length === 0)) {
         startIndex++;
         continue;
@@ -172,7 +177,7 @@ function uriTemplateSubstitution (spec) {
         for (const [j, element] of value.entries()) {
           if (j > 0) {
             result += varSpec.suffices['*'] ? (separator || ',') : ',';
-            if (varSpec.suffices['*'] && showVariables) {
+            if (showVariables && varSpec.suffices['*']) {
               result += varSpec.name + '=';
             }
           }
@@ -185,7 +190,7 @@ function uriTemplateSubstitution (spec) {
           result += varSpec.name + '=';
         }
         let first = true;
-        for (const key in value) {
+        for (const [key, item] of Object.entries(value)) {
           if (!first) {
             result += varSpec.suffices['*'] ? (separator || ',') : ',';
           }
@@ -195,8 +200,8 @@ function uriTemplateSubstitution (spec) {
             : notReallyPercentEncode(key);
           result += varSpec.suffices['*'] ? '=' : ',';
           result += shouldEscape
-            ? encodeURIComponent(value[key]).replaceAll('!', '%21')
-            : notReallyPercentEncode(value[key]);
+            ? encodeURIComponent(item).replaceAll('!', '%21')
+            : notReallyPercentEncode(item);
         }
       } else {
         if (showVariables) {
@@ -205,7 +210,7 @@ function uriTemplateSubstitution (spec) {
             result += '=';
           }
         }
-        if (varSpec.truncate != null) {
+        if (varSpec.truncate !== null && varSpec.truncate !== undefined) {
           value = value.slice(0, Math.max(0, varSpec.truncate));
         }
         result += shouldEscape
@@ -225,7 +230,7 @@ function uriTemplateSubstitution (spec) {
       ).slice(0, Math.max(0, prefix.length)) === prefix) {
         stringValue = /** @type {string} */ (stringValue).slice(prefix.length);
       } else {
-        return null;
+        return;
       }
     }
     if (varSpecs.length === 1 && varSpecs[0].suffices['*']) {
@@ -266,11 +271,15 @@ function uriTemplateSubstitution (spec) {
             innerArrayValue[j] = decodeURIComponent(innerArrayValue[j]);
           }
         }
-        arrayValue[i] = innerArrayValue.length === 1 ? innerArrayValue[0] : innerArrayValue;
+        arrayValue[i] = innerArrayValue.length === 1
+          ? innerArrayValue[0]
+          : innerArrayValue;
       }
 
       if (showVariables || hasEquals) {
-        const objectValue = resultObj[varName] || {};
+        const objectValue = /** @type {{[key: string]: unknown}} */ (
+          resultObj[varName] || {}
+        );
         for (const element of arrayValue) {
           /** @type {string|string[]} */
           let innerValue = stringValue;
@@ -300,7 +309,9 @@ function uriTemplateSubstitution (spec) {
           }
           if (objectValue[innerVarName] !== undefined) {
             if (Array.isArray(objectValue[innerVarName])) {
-              objectValue[innerVarName].push(innerValue);
+              /** @type {unknown[]} */ (
+                objectValue[innerVarName]
+              ).push(innerValue);
             } else {
               objectValue[innerVarName] =
                 [objectValue[innerVarName], innerValue];
@@ -315,8 +326,8 @@ function uriTemplateSubstitution (spec) {
           : objectValue;
       } else if (resultObj[varName] !== undefined) {
         resultObj[varName] = Array.isArray(resultObj[varName])
-          ? resultObj[varName].concat(arrayValue)
-          : [resultObj[varName]].concat(arrayValue);
+          ? [...resultObj[varName], ...arrayValue]
+          : [resultObj[varName], ...arrayValue];
       } else if (arrayValue.length === 1 && !varSpec.suffices['*']) {
         resultObj[varName] = arrayValue[0];
       } else {
@@ -332,40 +343,34 @@ function uriTemplateSubstitution (spec) {
       /** @type {{[key: number]: number}} */
       const specIndexMap = {};
       for (let i = 0; i < arrayValue.length; i++) {
-        // Try from beginning
+        // Try from beginning: stop at the first "*"-suffixed spec, or at the
+        //   lesser of `i` and the last spec index if none is starred.
+        const firstLimit = Math.min(varSpecs.length - 1, i);
         let firstStarred = 0;
-        for (
-          ;
-          firstStarred < varSpecs.length - 1 && firstStarred < i;
-          firstStarred++
+        while (
+          firstStarred < firstLimit &&
+          !varSpecs[firstStarred].suffices['*']
         ) {
-          if (varSpecs[firstStarred].suffices['*']) {
-            break;
-          }
+          firstStarred++;
         }
         if (firstStarred === i) {
           // The first [i] of them have no "*" suffix
           specIndexMap[i] = i;
           continue;
-        } else {
-          // Try from the end
-          let lastStarred;
-          for (
-            lastStarred = varSpecs.length - 1;
-            lastStarred > 0 && (
-              varSpecs.length - lastStarred
-            ) < (arrayValue.length - i);
-            lastStarred--
-          ) {
-            if (varSpecs[lastStarred].suffices['*']) {
-              break;
-            }
-          }
-          if ((varSpecs.length - lastStarred) === (arrayValue.length - i)) {
-            // The last [length - i] of them have no "*" suffix
-            specIndexMap[i] = lastStarred;
-            continue;
-          }
+        }
+        // Try from the end
+        let lastStarred = varSpecs.length - 1;
+        while (
+          lastStarred > 0 &&
+          (varSpecs.length - lastStarred) < (arrayValue.length - i) &&
+          !varSpecs[lastStarred].suffices['*']
+        ) {
+          lastStarred--;
+        }
+        if ((varSpecs.length - lastStarred) === (arrayValue.length - i)) {
+          // The last [length - i] of them have no "*" suffix
+          specIndexMap[i] = lastStarred;
+          continue;
         }
         // Just give up and use the first one
         specIndexMap[i] = firstStarred;
@@ -378,7 +383,6 @@ function uriTemplateSubstitution (spec) {
           continue;
         }
         const innerArrayValue = /** @type {string} */ (stringValue).split(',');
-        const hasEquals = false;
 
         let varName;
         let varSpec;
@@ -407,8 +411,13 @@ function uriTemplateSubstitution (spec) {
           (showVariables || varSpec.suffices['*']) &&
           resultObj[varName] !== undefined
         ) {
-          resultObj[varName] = Array.isArray(resultObj[varName]) ? resultObj[varName].concat(innerArrayValue) : [resultObj[varName]].concat(innerArrayValue);
-        } else if (innerArrayValue.length == 1 && !varSpec.suffices['*']) {
+          resultObj[varName] = Array.isArray(resultObj[varName])
+            ? [
+              ...(/** @type {unknown[]} */ (resultObj[varName])),
+              ...innerArrayValue
+            ]
+            : [resultObj[varName], ...innerArrayValue];
+        } else if (innerArrayValue.length === 1 && !varSpec.suffices['*']) {
           resultObj[varName] = innerArrayValue[0];
         } else {
           resultObj[varName] = innerArrayValue;
@@ -433,7 +442,9 @@ class UriTemplate {
    */
   constructor (template) {
     const parts = template.split('{');
-    const textParts = [(parts.shift())];
+    const textParts = [
+      /** @type {string} */ (parts.shift())
+    ];
     /** @type {string[]} */
     const prefixes = [];
 
@@ -444,7 +455,7 @@ class UriTemplate {
     const unSubstitutions = [];
 
     /** @type {string[]} */
-    let varNames = [];
+    const varNames = [];
     while (parts.length > 0) {
       const part = /** @type {string} */ (parts.shift());
       const spec = part.split('}', 1)[0];
@@ -454,7 +465,7 @@ class UriTemplate {
       unSubstitutions.push(funcs.unSubstitution);
       prefixes.push(funcs.prefix);
       textParts.push(remainder);
-      varNames = varNames.concat(funcs.substitution.varNames);
+      varNames.push(...funcs.substitution.varNames);
     }
 
     /**
@@ -492,6 +503,61 @@ class UriTemplate {
     this.fromUri = function (substituted) {
       /** @type {{[key: string]: string}} */
       const result = {};
+
+      /**
+       * Walk forward from `startOffset` to carve the next variable's raw value
+       *   out of `remaining`, skipping over blank separators with no prefix.
+       * @param {string} remaining
+       * @param {number} startOffset
+       * @returns {{stringValue: string, remaining: string} | undefined}
+       */
+      const consumeSegment = (remaining, startOffset) => {
+        let offset = startOffset;
+        let nextPart = textParts[offset + 1];
+        while (true) {
+          if (offset === textParts.length - 2) {
+            const endPart = remaining.slice(
+              remaining.length - nextPart.length
+            );
+            if (endPart !== nextPart) {
+              return undefined;
+            }
+            return {
+              stringValue: remaining.slice(
+                0, Math.max(0, remaining.length - nextPart.length)
+              ),
+              remaining: endPart
+            };
+          }
+          if (nextPart) {
+            const nextPartPos = remaining.indexOf(nextPart);
+            return {
+              stringValue: remaining.slice(0, Math.max(0, nextPartPos)),
+              remaining: remaining.slice(nextPartPos)
+            };
+          }
+          const nextPrefix = prefixes[offset + 1];
+          if (nextPrefix) {
+            let nextPartPos = remaining.indexOf(nextPrefix);
+            if (nextPartPos === -1) {
+              nextPartPos = remaining.length;
+            }
+            return {
+              stringValue: remaining.slice(0, Math.max(0, nextPartPos)),
+              remaining: remaining.slice(nextPartPos)
+            };
+          }
+          if (textParts.length > offset + 2) {
+            // If the separator between this variable and the next is blank
+            //   (with no prefix), continue onwards
+            offset++;
+            nextPart = textParts[offset + 1];
+            continue;
+          }
+          return {stringValue: remaining, remaining: ''};
+        }
+      };
+
       for (let i = 0; i < textParts.length; i++) {
         const part = textParts[i];
         if (substituted.slice(0, Math.max(0, part.length)) !== part) {
@@ -499,50 +565,17 @@ class UriTemplate {
         }
         substituted = substituted.slice(part.length);
         if (i >= textParts.length - 1) {
-          if (substituted == '') {
+          if (substituted === '') {
             break;
           }
           return undefined;
         }
-        let nextPart = textParts[i + 1];
-        let offset = i;
-        let stringValue;
-        while (true) {
-          if (offset === textParts.length - 2) {
-            const endPart = substituted.slice(
-              substituted.length - nextPart.length
-            );
-            if (endPart !== nextPart) {
-              return undefined;
-            }
-            stringValue = substituted.slice(
-              0, Math.max(0, substituted.length - nextPart.length)
-            );
-            substituted = endPart;
-          } else if (nextPart) {
-            const nextPartPos = substituted.indexOf(nextPart);
-            stringValue = substituted.slice(0, Math.max(0, nextPartPos));
-            substituted = substituted.slice(nextPartPos);
-          } else if (prefixes[offset + 1]) {
-            let nextPartPos = substituted.indexOf(prefixes[offset + 1]);
-            if (nextPartPos === -1) {
-              nextPartPos = substituted.length;
-            }
-            stringValue = substituted.slice(0, Math.max(0, nextPartPos));
-            substituted = substituted.slice(nextPartPos);
-          } else if (textParts.length > offset + 2) {
-            // If the separator between this variable and the next is blank
-            //   (with no prefix), continue onwards
-            offset++;
-            nextPart = textParts[offset + 1];
-            continue;
-          } else {
-            stringValue = substituted;
-            substituted = '';
-          }
-          break;
+        const segment = consumeSegment(substituted, i);
+        if (segment === undefined) {
+          return undefined;
         }
-        unSubstitutions[i](stringValue, result);
+        substituted = segment.remaining;
+        unSubstitutions[i](segment.stringValue, result);
       }
       return result;
     };

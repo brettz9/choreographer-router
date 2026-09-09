@@ -61,7 +61,8 @@ const orchestrator = new Orchestrator({
 });
 
 // or, for a plain Router:
-new Router(routes, fallback, {patterns: 'uritemplate'});
+const router = new Router(routes, fallback, {patterns: 'uritemplate'});
+router.trigger(location);
 ```
 
 `URLPattern` instances still work as scene keys even when `patterns` is
@@ -104,7 +105,8 @@ an unnamed group keyed `"0"`. To keep those out of `params`, a component whose
 pattern is exactly `*` is skipped:
 
 ```js
-new URLPattern({pathname: '/users/:id'});
+const pattern = new URLPattern({pathname: '/users/:id'});
+router.route(pattern, ({id}) => { /* ... */ });
 // matching `/users/42?ref=nav` → { id: '42' }, not { id: '42', '0': 'ref=nav' }
 ```
 

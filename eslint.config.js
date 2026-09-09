@@ -20,7 +20,10 @@ export default [
       'no-unused-vars': ['error', {
         varsIgnorePattern: 'Router|UriTemplate|orchestrator',
         argsIgnorePattern: 'id|post|isbn'
-      }]
+      }],
+      // The globals above let free-standing examples reference these names;
+      //   other examples legitimately declare them, so don't flag the overlap.
+      'no-shadow': 'off'
     }
   }
 ];

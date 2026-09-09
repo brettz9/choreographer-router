@@ -1,3 +1,5 @@
+/* eslint-disable unicorn/no-barrel-files -- Package entry point */
+
 /**
  * @typedef {import('./orchestrator.js').SceneCallback} SceneCallback
  */
