@@ -1,7 +1,7 @@
 {
   "name": "orchestrator-router",
-  "version": "2.0.3",
-  "description": "Client side router for Web Components using URI Templates",
+  "version": "3.0.0",
+  "description": "Client side router for Web Components using URLPattern (or URI Templates)",
   "author": "Sebastiaan Deckers <sebdeckers83@gmail.com>",
   "contributors": ["Brett Zamir"],
   "license": "ISC",
@@ -12,6 +12,9 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:brettz9/orchestrator-router.git"
+  },
+  "engines": {
+    "node": ">=24.16.0"
   },
   "scripts": {
     "prepublishOnly": "tsc",

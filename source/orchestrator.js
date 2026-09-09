@@ -13,23 +13,25 @@ import Router from './router.js'
 
 /**
  * @typedef {[
- *   pattern: string,
+ *   pattern: string|URLPattern,
  *   options: SceneOptions
  * ]} Scene
  */
 
 /**
- * @typedef {(pattern: string, params: Params) => void} SceneCallback
+ * @typedef {(pattern: string|URLPattern, params: Params) => void} SceneCallback
  */
 
 export default class Orchestrator extends Router {
   /**
    * @param {{
    *   stage: Element,
-   *   scenes: Scene[]
-   * }} cfg
+   *   scenes: Scene[],
+   *   patterns?: import('./router.js').PatternSyntax
+   * }} cfg `patterns` chooses how a scene key given as a plain string is
+   *   interpreted (`'urlpattern'`, the default, or `'uritemplate'`).
    */
-  constructor ({ stage, scenes }) {
+  constructor ({ stage, scenes, patterns }) {
     const routes = new Map()
     for (let [pattern, options] of new Map(scenes).entries()) {
       if (typeof options === 'string') {
@@ -61,7 +63,7 @@ export default class Orchestrator extends Router {
       )
       routes.set(pattern, handler)
     }
-    super(routes, (url) => this.#onFallback(url))
+    super(routes, (url) => this.#onFallback(url), { patterns })
     this.stage = stage
 
     /** @type {HTMLElement|undefined} */
@@ -79,7 +81,7 @@ export default class Orchestrator extends Router {
   }
 
   /**
-   * @param {string} pattern
+   * @param {string|URLPattern} pattern
    * @param {Params} params
    * @param {{
    *   tagName?: string
